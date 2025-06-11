@@ -1,10 +1,13 @@
+import { useEffect } from "react";
 import { Container } from "../components/container";
 import logo from "../assets/logo.svg";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Input } from "../components/input";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth } from "../services/firebase-connection";
 
 const schema = z.object({
   email: z
@@ -26,8 +29,25 @@ export const Login = () => {
     mode: "onChange",
   });
 
-  const onSubmit = (data: FormData) => {
-    console.log(data);
+  useEffect(() => {
+    const handleLogout = async () => {
+      await signOut(auth);
+    };
+
+    handleLogout();
+  }, []);
+
+  const navigate = useNavigate();
+
+  const onSubmit = async (data: FormData) => {
+    signInWithEmailAndPassword(auth, data.email, data.password)
+      .then((user) => {
+        console.log(user.user);
+        navigate("/dashboard");
+      })
+      .catch((error) => {
+        console.error("Erro ao fazer login:", error);
+      });
   };
 
   return (
@@ -38,7 +58,7 @@ export const Login = () => {
         </Link>
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="msx-w-xl w-full rounded-lg bg-white"
+          className="msx-w-xl w-full rounded-lg bg-white p-4"
         >
           <div className="mb-3">
             <Input
@@ -58,8 +78,14 @@ export const Login = () => {
               register={register}
             />
           </div>
-          <button>Acessar</button>
+          <button
+            className="h-10 w-full cursor-pointer rounded-md bg-zinc-900 font-medium text-white"
+            type="submit"
+          >
+            Acessar
+          </button>
         </form>
+        <Link to="/register">Ainda não possui uma conta? Cadastre-se</Link>
       </div>
     </Container>
   );
