@@ -7,7 +7,7 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-interface UserProps {
+export interface UserProps {
   uid: string;
   name: string | null;
   email: string | null;
@@ -37,8 +37,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, []);
 
+  const handleInfoUser = ({ uid, name, email }: UserProps) => {
+    setUser({
+      uid,
+      name,
+      email,
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ signed: !!user, loadingAuth }}>
+    <AuthContext.Provider
+      value={{ signed: !!user, loadingAuth, handleInfoUser, user }}
+    >
       {children}
     </AuthContext.Provider>
   );

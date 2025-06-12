@@ -1,7 +1,10 @@
+import { PanelHeader } from "../../components/panel-header";
+import { Container } from "../../components/container";
+
 export const Dashboard = () => {
   return (
-    <div>
-      <h1>Página Dashboard</h1>
-    </div>
+    <Container>
+      <PanelHeader />
+    </Container>
   );
 };

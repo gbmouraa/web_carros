@@ -1,3 +1,5 @@
+import { useEffect, useContext } from "react";
+import { AuthContext } from "../contexts/auth-context";
 import { Container } from "../components/container";
 import logo from "../assets/logo.svg";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,7 +13,6 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { useEffect } from "react";
 
 const schema = z.object({
   name: z.string().nonempty("Insira seu nome"),
@@ -37,6 +38,7 @@ export const Register = () => {
     mode: "onChange",
   });
 
+  const { handleInfoUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -53,6 +55,13 @@ export const Register = () => {
         await updateProfile(user.user, {
           displayName: data.name,
         });
+
+        handleInfoUser({
+          uid: user.user.uid,
+          name: data.name,
+          email: data.email,
+        });
+
         navigate("/dashboard");
       })
       .catch((error) => {

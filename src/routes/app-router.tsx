@@ -6,6 +6,9 @@ import { CarDetail } from "../pages/car";
 import { Dashboard } from "../pages/dashboard/dashboard";
 import { New } from "../pages/dashboard/new";
 import { Header } from "../components/header";
+import { Private } from "./private";
+
+// outlet é como se fosse uma div para poder ser renderizado um grupo de rotas
 
 const MainLayout = () => {
   return (
@@ -27,8 +30,22 @@ export const AppRouter = () => {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/car-detail/:id" element={<CarDetail />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/new" element={<New />} />
+          <Route
+            path="/dashboard"
+            element={
+              <Private>
+                <Dashboard />
+              </Private>
+            }
+          />
+          <Route
+            path="/dashboard/new"
+            element={
+              <Private>
+                <New />
+              </Private>
+            }
+          />
         </Route>
         <Route element={<SimpleLayout />}>
           <Route path="/login" element={<Login />} />
