@@ -1,3 +1,5 @@
+import { ChangeEvent, useContext } from "react";
+import { AuthContext } from "../../contexts/auth-context";
 import { Container } from "../../components/container";
 import { PanelHeader } from "../../components/panel-header";
 import { FiUpload } from "react-icons/fi";
@@ -5,6 +7,9 @@ import { useForm } from "react-hook-form";
 import { Input } from "../../components/input";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { v4 as uuidV4 } from "uuid";
+import { storage } from "../../services/firebase-connection";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const schema = z.object({
   name: z.string().nonempty("O campo nome é obrigatório"),
@@ -25,6 +30,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export const New = () => {
+  const { user } = useContext(AuthContext);
+
   const {
     register,
     handleSubmit,
@@ -39,19 +46,47 @@ export const New = () => {
     console.log(data);
   };
 
+  const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const image = e.target.files[0];
+
+      if (image.type === "image/jpeg" || image.type === "image/png") {
+        await uploadFile(image);
+      } else {
+        alert("Insira uma imagem do tipo jpeg ou png");
+      }
+    }
+  };
+
+  const uploadFile = async (img: File) => {
+    if (!user?.uid) return;
+
+    const currentUid = user.uid;
+    const imgUid = uuidV4();
+
+    const uploadRef = ref(storage, `images/${currentUid}/${imgUid}`);
+
+    await uploadBytes(uploadRef, img).then((snapshot) => {
+      getDownloadURL(snapshot.ref).then((downloadURL) => {
+        console.log(downloadURL);
+      });
+    });
+  };
+
   return (
     <Container>
       <PanelHeader />
       <div className="flex w-full flex-col items-center gap-2 rounded-lg bg-white p-3 sm:flex-row">
-        <button className="flex h-32 w-48 cursor-pointer items-center justify-center rounded-lg border-2 border-gray-600">
+        <button className="relative flex h-32 w-48 cursor-pointer items-center justify-center rounded-lg border-2 border-gray-600">
           <div className="absolute cursor-pointer">
             <FiUpload size={30} color="#000" />
           </div>
           <div className="cursor-pointer">
             <input
-              className="cursor-pointer opacity-0"
+              className="absolute top-0 left-0 z-10 block h-32 w-48 cursor-pointer opacity-0"
               type="file"
               accept="image/*"
+              onChange={handleFile}
             />
           </div>
         </button>
