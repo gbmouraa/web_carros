@@ -1,15 +1,21 @@
-import { ChangeEvent, useContext } from "react";
+import { ChangeEvent, useContext, useState } from "react";
 import { AuthContext } from "../../contexts/auth-context";
 import { Container } from "../../components/container";
 import { PanelHeader } from "../../components/panel-header";
-import { FiUpload } from "react-icons/fi";
+import { FiUpload, FiTrash } from "react-icons/fi";
 import { useForm } from "react-hook-form";
 import { Input } from "../../components/input";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { v4 as uuidV4 } from "uuid";
-import { storage } from "../../services/firebase-connection";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../../services/firebase-connection";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
+import { addDoc, collection } from "firebase/firestore";
 
 const schema = z.object({
   name: z.string().nonempty("O campo nome é obrigatório"),
@@ -29,8 +35,17 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+interface ImageItemProps {
+  uid: string;
+  name: string;
+  previewURL: string;
+  url: string;
+}
+
 export const New = () => {
   const { user } = useContext(AuthContext);
+
+  const [carImages, setCarImages] = useState<ImageItemProps[]>([]);
 
   const {
     register,
@@ -43,7 +58,41 @@ export const New = () => {
   });
 
   const onSubmit = (data: FormData) => {
-    console.log(data);
+    if (carImages.length === 0) {
+      alert("Envie alguma imagem do carro.");
+      return;
+    }
+
+    const carList = carImages.map((car) => {
+      return {
+        uid: car.uid,
+        name: car.name,
+        url: car.url,
+      };
+    });
+
+    addDoc(collection(db, "cars"), {
+      name: data.name,
+      model: data.model,
+      whatsapp: data.whatsapp,
+      city: data.city,
+      year: data.year,
+      km: data.km,
+      price: data.price,
+      description: data.description,
+      created: new Date(),
+      owner: user?.name,
+      uid: user?.uid,
+      images: carImages,
+    })
+      .then(() => {
+        console.log("Cadastrado com sucesso");
+        reset();
+        setCarImages([]);
+      })
+      .catch((error) => {
+        console.error("Não foi posível cadastrar o carro:", error);
+      });
   };
 
   const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -62,22 +111,42 @@ export const New = () => {
     if (!user?.uid) return;
 
     const currentUid = user.uid;
+    // gera um id unico aleatório
     const imgUid = uuidV4();
 
     const uploadRef = ref(storage, `images/${currentUid}/${imgUid}`);
 
     await uploadBytes(uploadRef, img).then((snapshot) => {
       getDownloadURL(snapshot.ref).then((downloadURL) => {
-        console.log(downloadURL);
+        const imageItem = {
+          name: imgUid,
+          uid: currentUid,
+          previewURL: URL.createObjectURL(img),
+          url: downloadURL,
+        };
+
+        setCarImages((prev) => [...prev, imageItem]);
       });
     });
+  };
+
+  const handleDeleteImage = async (img: ImageItemProps) => {
+    const imagePath = `images/${img.uid}/${img.name}`;
+    const imageRef = ref(storage, imagePath);
+
+    try {
+      await deleteObject(imageRef);
+      setCarImages((prev) => prev.filter((item) => item.url !== img.url));
+    } catch (error) {
+      console.error("Erro ao deletar:", error);
+    }
   };
 
   return (
     <Container>
       <PanelHeader />
       <div className="flex w-full flex-col items-center gap-2 rounded-lg bg-white p-3 sm:flex-row">
-        <button className="relative flex h-32 w-48 cursor-pointer items-center justify-center rounded-lg border-2 border-gray-600">
+        <button className="relative flex min-h-32 min-w-48 cursor-pointer items-center justify-center rounded-lg border-2 border-gray-600">
           <div className="absolute cursor-pointer">
             <FiUpload size={30} color="#000" />
           </div>
@@ -90,6 +159,24 @@ export const New = () => {
             />
           </div>
         </button>
+        {carImages.map((item) => (
+          <div
+            key={item.name}
+            className="relative flex h-32 w-full items-center justify-center"
+          >
+            <button
+              className="absolute cursor-pointer"
+              onClick={() => handleDeleteImage(item)}
+            >
+              <FiTrash size={28} color="#FFF" />
+            </button>
+            <img
+              className="h-32 w-full rounded-lg object-cover"
+              src={item.url}
+              alt="Foto do carro"
+            />
+          </div>
+        ))}
       </div>
       <div className="mt-2 flex w-full flex-col items-center gap-2 rounded-lg bg-white p-3 sm:flex-row">
         <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
