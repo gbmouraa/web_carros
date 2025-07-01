@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useContext } from "react";
+import { AuthContext } from "../contexts/auth-context";
 import { Container } from "../components/container";
 import logo from "../assets/logo.svg";
 import { Link, useNavigate } from "react-router-dom";
@@ -29,6 +30,9 @@ export const Login = () => {
     mode: "onChange",
   });
 
+  const { handleInfoUser } = useContext(AuthContext);
+
+  // usuário é deslogado (caso esteja) toda vez que acessar a página de login
   useEffect(() => {
     const handleLogout = async () => {
       await signOut(auth);
@@ -42,7 +46,11 @@ export const Login = () => {
   const onSubmit = async (data: FormData) => {
     signInWithEmailAndPassword(auth, data.email, data.password)
       .then((user) => {
-        console.log(user.user);
+        handleInfoUser({
+          uid: user.user.uid,
+          email: user.user.email,
+          name: user.user.displayName,
+        });
         navigate("/dashboard");
       })
       .catch((error) => {
