@@ -63,7 +63,7 @@ export const New = () => {
       return;
     }
 
-    const carList = carImages.map((car) => {
+    const carListImages = carImages.map((car) => {
       return {
         uid: car.uid,
         name: car.name,
@@ -72,7 +72,7 @@ export const New = () => {
     });
 
     addDoc(collection(db, "cars"), {
-      name: data.name,
+      name: data.name.toUpperCase(),
       model: data.model,
       whatsapp: data.whatsapp,
       city: data.city,
@@ -83,7 +83,7 @@ export const New = () => {
       created: new Date(),
       owner: user?.name,
       uid: user?.uid,
-      images: carImages,
+      images: carListImages,
     })
       .then(() => {
         console.log("Cadastrado com sucesso");
