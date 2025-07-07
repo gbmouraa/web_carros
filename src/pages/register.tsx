@@ -13,6 +13,7 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
+import toast from "react-hot-toast";
 
 const schema = z.object({
   name: z.string().nonempty("Insira seu nome"),
@@ -61,11 +62,12 @@ export const Register = () => {
           name: data.name,
           email: data.email,
         });
-
+        toast.success("Bem-vindo ao Webcarros");
         navigate("/dashboard");
       })
       .catch((error) => {
         console.error("Não foi possível realizar seu cadastro:", error);
+        toast.error("Não foi possível realizar seu cadastro");
       });
   };
 

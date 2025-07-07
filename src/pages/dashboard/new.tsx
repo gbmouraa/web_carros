@@ -16,6 +16,7 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { addDoc, collection } from "firebase/firestore";
+import toast from "react-hot-toast";
 
 const schema = z.object({
   name: z.string().nonempty("O campo nome é obrigatório"),
@@ -59,7 +60,7 @@ export const New = () => {
 
   const onSubmit = (data: FormData) => {
     if (carImages.length === 0) {
-      alert("Envie alguma imagem do carro.");
+      toast.error("Envie alguma imagem do carro.");
       return;
     }
 
@@ -87,6 +88,7 @@ export const New = () => {
     })
       .then(() => {
         console.log("Cadastrado com sucesso");
+        toast.success("Carro cadastrado com sucesso");
         reset();
         setCarImages([]);
       })
